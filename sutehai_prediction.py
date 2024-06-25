@@ -62,6 +62,14 @@ def game_ready (paifu, kyoku):
 
   return tehai, alldict
 
+def do_sutehai(player,tsumo, sutehai, alldict):
+      alldict['tsumo'][0] = tsumo
+      alldict['tedashi'][0] = sutehai
+      alldict[player]['sutehai'].append(sutehai)
+      del alldict[player]['sutehai'][0]
+      print(f"手牌２：{alldict['tehai']}")
+      print(alldict)
+
 # ゲーム進行中の処理用の関数
 def game(paifu, tehai, alldict, kyoku):
   naki_count = 0
@@ -75,24 +83,31 @@ def game(paifu, tehai, alldict, kyoku):
       player = paifu[n]['args'][0]
       tsumo = paifu[n]['args'][2]
       alldict['tehai'] = tehai[player]
+      print(f"手牌１：{alldict['tehai']}")
       if paifu[n+1]['cmd'] == 'sutehai':
         sutehai = paifu[n+1]['args'][1]
+        do_sutehai(player, tsumo, sutehai, alldict)
         tehai[player].append(tsumo)
         tehai[player].remove(sutehai)
       elif paifu[n+1]['args'][1] == 'richi':
         sutehai = paifu[n+2]['args'][1]
+        do_sutehai(player, tsumo, sutehai, alldict)
         tehai[player].append(tsumo)
         tehai[player].remove(sutehai)
       elif paifu[n+1]['args'][1] == 'tsumo' or paifu[n+1]['args'][1] == 'ron':
-        pass
+        alldict['tsumo'][0] = tsumo
+        alldict['tedashi'][0] = sutehai
+        alldict[player]['sutehai'].append(sutehai)
+        del alldict[player]['sutehai'][0]
       else:
         sutehai = 0
 
-      alldict['tsumo'][0] = tsumo
-      alldict['tedashi'][0] = sutehai
-      alldict[player]['sutehai'].append(sutehai)
-      del alldict[player]['sutehai'][0]
-      print(alldict)
+      # alldict['tsumo'][0] = tsumo
+      # alldict['tedashi'][0] = sutehai
+      # alldict[player]['sutehai'].append(sutehai)
+      # del alldict[player]['sutehai'][0]
+      # print(f"手牌２：{alldict['tehai']}")
+      # print(alldict)
       
     # ドラを保存
     elif cmd == "dora":
