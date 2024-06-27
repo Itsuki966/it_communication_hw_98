@@ -193,8 +193,14 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
 
 kyokustart, kyokuend = kyokustart_kyokuend(paifu_data)
 
-for l in range(len(kyokustart)):
+print(f"{len(kyokustart)}局まであります。")
+kyoku = int(input("表示する局を入力してください"))
 
-  tehai, alldict, naki_dict = game_ready(paifu_data, l)
-  # print(f'手牌：{tehai}')
-  input_list = game(paifu_data, tehai, alldict, l, naki_dict)
+tehai, alldict, naki_dict = game_ready(paifu_data, kyoku-1)
+input_list = game(paifu_data, tehai, alldict, kyoku-1, naki_dict)
+
+# for l in range(len(kyokustart)):
+
+#   tehai, alldict, naki_dict = game_ready(paifu_data, l)
+#   # print(f'手牌：{tehai}')
+#   input_list = game(paifu_data, tehai, alldict, l, naki_dict)
