@@ -52,6 +52,7 @@ def game_ready (paifu, kyoku):
   alldict['tehai'] = tehai[first_player]
   alldict['tsumo'] = [0]
   alldict['tedashi'] = [0]
+  alldict['tsumogiri'] = [0]
   alldict['dora'] = [0,0,0,0]
 
 
@@ -62,6 +63,7 @@ def game_ready (paifu, kyoku):
 
   return tehai, alldict
 
+# ツモしてから牌を切るまでの関数
 def do_sutehai(player,tsumo, sutehai, alldict):
       alldict['tsumo'][0] = tsumo
       alldict['tedashi'][0] = sutehai
@@ -77,7 +79,8 @@ def game(paifu, tehai, alldict, kyoku):
 
   for n in range(kyokustart[kyoku], kyokuend[kyoku]+1):
     cmd = paifu[n]['cmd']
-
+    alldict['tsumogiri'] = 0
+    
     # ツモから牌を切るまで
     if cmd == "tsumo":
       player = paifu[n]['args'][0]
@@ -86,6 +89,11 @@ def game(paifu, tehai, alldict, kyoku):
       print(f"手牌１：{alldict['tehai']}")
       if paifu[n+1]['cmd'] == 'sutehai':
         sutehai = paifu[n+1]['args'][1]
+        
+        # ツモギリだった場合フラグを立てる
+        if sutehai == tsumo:
+          alldict['tsumogiri'] = 1
+          
         do_sutehai(player, tsumo, sutehai, alldict)
         tehai[player].append(tsumo)
         tehai[player].remove(sutehai)
@@ -101,13 +109,6 @@ def game(paifu, tehai, alldict, kyoku):
         del alldict[player]['sutehai'][0]
       else:
         sutehai = 0
-
-      # alldict['tsumo'][0] = tsumo
-      # alldict['tedashi'][0] = sutehai
-      # alldict[player]['sutehai'].append(sutehai)
-      # del alldict[player]['sutehai'][0]
-      # print(f"手牌２：{alldict['tehai']}")
-      # print(alldict)
       
     # ドラを保存
     elif cmd == "dora":
