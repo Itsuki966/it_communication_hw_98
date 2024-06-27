@@ -1,5 +1,12 @@
 import json
 
+class CustomJSONEncoder(json.JSONEncoder):
+    def iterencode(self, obj, _one_shot=False):
+        # Override the default method to handle lists differently
+        if isinstance(obj, list):
+            return '[' + ', '.join(self.iterencode(e) for e in obj) + ']'
+        return super().iterencode(obj, _one_shot=_one_shot)
+
 # jsonファイルの読み込み
 with open('/Users/itsukikuwahara/Documents/class/it_tue/2023-2024_paifu/L001_S002_0008_01A.json') as f:
   paifu_data = json.load(f)
@@ -67,17 +74,19 @@ def game_ready (paifu, kyoku):
 
 
 # ツモしてから牌を切るまでの関数
-def do_sutehai(player,tsumo, sutehai, alldict):
+def do_sutehai(player,tsumo, sutehai, alldict, record, n):
   alldict['tsumo'][0] = tsumo
   alldict['tedashi'][0] = sutehai
-  alldict[player]['sutehai'].append(sutehai)
   del alldict[player]['sutehai'][0]
-  print("プレイヤー：", player)
-  print(alldict)
+  # print("プレイヤー：", player)
+  # print(alldict)
+  # record.append(alldict)
+  record[n] = alldict
+  alldict[player]['sutehai'].append(sutehai)
   
  
 # 鳴いた時の処理を行う関数     
-def do_pon_chi(n, paifu, player, naki_dict, tehai, alldict):
+def do_pon_chi(n, paifu, player, naki_dict, tehai, alldict, record):
   naki = paifu[n-1]['args'][1]
   naki_sutehai = paifu[n+2]['args'][1]
   open_pai = paifu[n+1]['args'][1].replace("<","").replace(">","")
@@ -86,7 +95,7 @@ def do_pon_chi(n, paifu, player, naki_dict, tehai, alldict):
   alldict[player]['naki'][naki_dict[player]] = [open_pai[l] + open_pai[l+1] for l in range(0,len(open_pai)-1,2)]
   alldict[player]['naki'][naki_dict[player]].append(naki)
   alldict[player]['naki'][naki_dict[player]].append(0)
-  do_sutehai(player, naki, naki_sutehai, alldict)
+  do_sutehai(player, naki, naki_sutehai, alldict, record, n)
   
   tehai[player].append(naki)
   tehai[player].remove(naki_sutehai)
@@ -101,6 +110,8 @@ def do_pon_chi(n, paifu, player, naki_dict, tehai, alldict):
 # ゲーム進行中の処理用の関数
 def game(paifu, tehai, alldict, kyoku, naki_dict):
   dora_count = 0
+  # record = []
+  record = {}
 
   for n in range(kyokustart[kyoku], kyokuend[kyoku]+1):
     cmd = paifu[n]['cmd']
@@ -118,12 +129,12 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
         if sutehai == tsumo:
           alldict['tsumogiri'] = 1
           
-        do_sutehai(player, tsumo, sutehai, alldict)
+        do_sutehai(player, tsumo, sutehai, alldict, record,n)
         tehai[player].append(tsumo)
         tehai[player].remove(sutehai)
       elif paifu[n+1]['args'][1] == 'richi':
         sutehai = paifu[n+2]['args'][1]
-        do_sutehai(player, tsumo, sutehai, alldict)
+        do_sutehai(player, tsumo, sutehai, alldict, record, n)
         tehai[player].append(tsumo)
         tehai[player].remove(sutehai)
       elif paifu[n+1]['args'][1] == 'tsumo' or paifu[n+1]['args'][1] == 'ron':
@@ -141,12 +152,14 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
       dora_count += 1
       
     elif cmd == "agari":
-      print(paifu[n]['args'])
-      print("----------------------------------------------------------------------")
+      pass
+      # print(paifu[n]['args'])
+      # print("----------------------------------------------------------------------")
 
     elif cmd == "ryukyoku":
-      print("流局")
-      print("----------------------------------------------------------------------")
+      pass
+      # print("流局")
+      # print("----------------------------------------------------------------------")
 
     # 鳴き
     elif cmd == "say":
@@ -155,12 +168,12 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
       player = paifu[n]['args'][0]
 
       if say == 'pon':
-        print(f'#ポン：{player}')
-        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict)
+        # print(f'#ポン：{player}')
+        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict, record)
 
       elif say == 'chi':
-        print(f"#チー：{player}")
-        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict)
+        # print(f"#チー：{player}")
+        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict, record)
         
 
       elif say == 'kan':
@@ -188,15 +201,20 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
         tehai[player].remove(0)    
         naki_dict[player] += 1
         alldict['tsumo'][0] = kan
-        print("カンしたよ")
-        print("プレイヤー：", alldict)
+        # print("カンしたよ")
+        # print("プレイヤー：", alldict)
+        record[n] = alldict
         
 
       elif say == 'richi':
         alldict[player]['richi'][0] = 1
-        print("リーチしたよ")
-        print("プレイヤー：", player)
-        print(alldict)
+        # print("リーチしたよ")
+        # print("プレイヤー：", player)
+        # print(alldict)
+        record[n] = alldict
+        
+  return record
+        
         
 
 kyokustart, kyokuend = kyokustart_kyokuend(paifu_data)
@@ -205,4 +223,11 @@ print(f"{len(kyokustart)}局まであります。")
 kyoku = int(input("表示する局を入力してください"))
 
 tehai, alldict, naki_dict = game_ready(paifu_data, kyoku-1)
-input_list = game(paifu_data, tehai, alldict, kyoku-1, naki_dict)
+record = game(paifu_data, tehai, alldict, kyoku-1, naki_dict)
+# print(record)
+# print([i for i in record])
+# for i in record:
+#   # print(json.dumps(i))
+#   json_str = json.dumps(i, indent=2, cls=CustomJSONEncoder)
+#   print(json_str)
+print(json.dumps(record))
