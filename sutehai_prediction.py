@@ -174,10 +174,18 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
           for M in range(0,3):
             naki_list[M] = kan.lower()
           naki_list[3] = kan.upper()
+          
+          for kd in range(0,4):
+            tehai[player].remove(naki_list[kd])
+            tehai[player].append(0)
+            
         else:
           for m in range(0,4):
             naki_list[m] = kan
-
+            tehai[player].remove(kan)
+            tehai[player].append(0)
+        
+        tehai[player].remove(0)    
         naki_dict[player] += 1
         alldict['tsumo'][0] = kan
         print("カンしたよ")
@@ -198,9 +206,3 @@ kyoku = int(input("表示する局を入力してください"))
 
 tehai, alldict, naki_dict = game_ready(paifu_data, kyoku-1)
 input_list = game(paifu_data, tehai, alldict, kyoku-1, naki_dict)
-
-# for l in range(len(kyokustart)):
-
-#   tehai, alldict, naki_dict = game_ready(paifu_data, l)
-#   # print(f'手牌：{tehai}')
-#   input_list = game(paifu_data, tehai, alldict, l, naki_dict)
