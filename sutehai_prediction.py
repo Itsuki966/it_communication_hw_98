@@ -1,7 +1,7 @@
 import json
 
 # jsonファイルの読み込み
-with open('/Users/itsukikuwahara/Documents/class/it_tue/sutehai_prediction_project/2023-2024_paifu/L001_S002_0008_01A.json') as f:
+with open('/Users/itsukikuwahara/Documents/class/it_tue/2023-2024_paifu/L001_S002_0008_01A.json') as f:
   paifu_data = json.load(f)
   
 
@@ -26,6 +26,7 @@ def game_ready (paifu, kyoku):
 
   tehai = {}
   alldict = {}
+  naki_dict = {}
 
   for i in range(kyokustart[kyoku], kyokuend[kyoku]+1):
     cmd = paifu[i]['cmd']
@@ -39,6 +40,7 @@ def game_ready (paifu, kyoku):
       player = paifu[i]['args'][0]
       if player not in tehai:
         tehai[player] = [paifu[i]['args'][1][l] + paifu[i]['args'][1][l+1] for l in range(0,len(paifu[i]['args'][1])-1,2)]
+        naki_dict[player] = 0
       else:
         if len(paifu[i]['args'][1]) != 2:
           for l in range(0, len(paifu[i]['args'][1])-1,2):
@@ -61,20 +63,40 @@ def game_ready (paifu, kyoku):
   for k in key:
     alldict[k] = {"sutehai":[0*s for s in range(1,26)],"naki":[[0*i for i in range(1,5)],[0*i for i in range(1,5)],[0*i for i in range(1,5)],[0*i for i in range(1,5)]], "richi":[0]}
 
-  return tehai, alldict
+  return tehai, alldict, naki_dict
 
 # ツモしてから牌を切るまでの関数
 def do_sutehai(player,tsumo, sutehai, alldict):
-      alldict['tsumo'][0] = tsumo
-      alldict['tedashi'][0] = sutehai
-      alldict[player]['sutehai'].append(sutehai)
-      del alldict[player]['sutehai'][0]
-      print(f"手牌２：{alldict['tehai']}")
-      print(alldict)
+  alldict['tsumo'][0] = tsumo
+  alldict['tedashi'][0] = sutehai
+  alldict[player]['sutehai'].append(sutehai)
+  del alldict[player]['sutehai'][0]
+  print(alldict)
+ 
+# 鳴いた時の処理を行う関数     
+def do_pon_chi(n, paifu, player, naki_dict, tehai, alldict):
+  naki = paifu[n-1]['args'][1]
+  naki_sutehai = paifu[n+2]['args'][1]
+  open_pai = paifu[n+1]['args'][1].replace("<","").replace(">","")
+  alldict['tehai'] = tehai[player]
+  
+  alldict[player]['naki'][naki_dict[player]] = [open_pai[l] + open_pai[l+1] for l in range(0,len(open_pai)-1,2)]
+  alldict[player]['naki'][naki_dict[player]].append(naki)
+  alldict[player]['naki'][naki_dict[player]].append(0)
+  do_sutehai(player, naki, naki_sutehai, alldict)
+  
+  tehai[player].append(naki)
+  tehai[player].remove(naki_sutehai)
+  
+  for s in range(len(alldict[player]['naki'][naki_dict[player]])-1):
+    tehai[player].remove(alldict[player]['naki'][naki_dict[player]][s])
+    tehai[player].append(0)
+  
+  naki_dict[player] += 1  
+  # print(alldict)
 
 # ゲーム進行中の処理用の関数
-def game(paifu, tehai, alldict, kyoku):
-  naki_count = 0
+def game(paifu, tehai, alldict, kyoku, naki_dict):
   dora_count = 0
 
   for n in range(kyokustart[kyoku], kyokuend[kyoku]+1):
@@ -86,7 +108,6 @@ def game(paifu, tehai, alldict, kyoku):
       player = paifu[n]['args'][0]
       tsumo = paifu[n]['args'][2]
       alldict['tehai'] = tehai[player]
-      print(f"手牌１：{alldict['tehai']}")
       if paifu[n+1]['cmd'] == 'sutehai':
         sutehai = paifu[n+1]['args'][1]
         
@@ -131,54 +152,63 @@ def game(paifu, tehai, alldict, kyoku):
       player = paifu[n]['args'][0]
 
       if say == 'pon':
-        pon = paifu[n-1]['args'][1]
-        sutehai = paifu[n+2]['args'][1]
+        print(f'#ポン{tehai[player]}')
+        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict)
+        # pon = paifu[n-1]['args'][1]
+        # sutehai = paifu[n+2]['args'][1]
+        # open_pai = paifu[n+1]['args'][1].replace("<","").replace(">","")
 
-        tehai[player].append(pon)
-        tehai[player].remove(sutehai)
-
-        naki_list = alldict[player]['naki'][naki_count]
+        # alldict[player]['naki'][naki_count] = [open_pai[l] + open_pai[l+1] for l in range(0,len(open_pai)-1,2)]
+        # alldict[player]['naki'][naki_count].append(0)
         
-        for n in range(0,3):
-          naki_list[n] = pon
+        # tehai[player].append(pon)
+        # tehai[player].remove(sutehai)
 
-        naki_count += 1
-        alldict['tsumo'][0] = pon
-        alldict['tedashi'][0] = sutehai
-        alldict[player]['sutehai'].append(sutehai)
-        del alldict[player]['sutehai'][0]
-        print(alldict)
+        # naki_list = alldict[player]['naki'][naki_count]
+        
+        # for n in range(0,3):
+        #   naki_list[n] = pon
+
+        # naki_count += 1
+        # alldict['tsumo'][0] = pon
+        # alldict['tedashi'][0] = sutehai
+        # alldict[player]['sutehai'].append(sutehai)
+        # del alldict[player]['sutehai'][0]
+        # print(alldict)
         
 
       elif say == 'chi':
-        chi = paifu[n-1]['args'][1]
-        sutehai = paifu[n+2]['args'][1]
-        open_pai = paifu[n+1]['args'][1].replace("<","").replace(">","")
+        print(f"#チー{tehai[player]}")
+        do_pon_chi(n, paifu, player, naki_dict, tehai, alldict)
+        # chi = paifu[n-1]['args'][1]
+        # sutehai = paifu[n+2]['args'][1]
+        # open_pai = paifu[n+1]['args'][1].replace("<","").replace(">","")
+        
+        # alldict[player]['naki'][naki_dict[player]] = [open_pai[l] + open_pai[l+1] for l in range(0,len(open_pai)-1,2)]
+        # alldict[player]['naki'][naki_dict[player]].append(0)
 
-        alldict[player]['naki'][naki_count] = [open_pai[l] + open_pai[l+1] for l in range(0,len(open_pai)-1,2)]
-        alldict[player]['naki'][naki_count].append(0)
+        # tehai[player].append(chi)
+        # tehai[player].remove(sutehai)
 
-        tehai[player].append(chi)
-        tehai[player].remove(sutehai)
-
-        naki_count += 1
-        alldict['tsumo'][0] = chi
-        alldict['tedashi'][0] = sutehai
-        alldict[player]['sutehai'].append(sutehai)
-        del alldict[player]['sutehai'][0]
-        print(alldict)
+        # naki_dict[player] += 1
+        # alldict['tsumo'][0] = chi
+        # alldict['tedashi'][0] = sutehai
+        # alldict[player]['sutehai'].append(sutehai)
+        # del alldict[player]['sutehai'][0]
+        # print(alldict)
         
 
       elif say == 'kan':
+        print("かん")
         kan = paifu[n-1]['args'][2]
 
         tehai[player].append(kan)
 
-        naki_list = alldict[player]['naki'][naki_count]
-        for n in range(0,4):
-          naki_list[n] = kan
+        naki_list = alldict[player]['naki'][naki_dict[player]]
+        for m in range(0,4):
+          naki_list[m] = kan
 
-        naki_count += 1
+        naki_dict[player] += 1
         alldict['tsumo'][0] = kan
         print(alldict)
         
@@ -192,6 +222,6 @@ kyokustart, kyokuend = kyokustart_kyokuend(paifu_data)
 
 for l in range(len(kyokustart)):
 
-  tehai, alldict = game_ready(paifu_data, l)
+  tehai, alldict, naki_dict = game_ready(paifu_data, l)
   # print(f'手牌：{tehai}')
-  input_list = game(paifu_data, tehai, alldict, l)
+  input_list = game(paifu_data, tehai, alldict, l, naki_dict)
