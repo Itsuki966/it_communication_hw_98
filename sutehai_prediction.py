@@ -142,12 +142,12 @@ def game(paifu, tehai, alldict, kyoku, naki_dict):
       dora_count += 1
       
     elif cmd == "agari":
-      pass
+      print("あがり")
       print(paifu[n]['args'])
+      print(alldict)
       print("----------------------------------------------------------------------")
 
     elif cmd == "ryukyoku":
-      pass
       print("流局")
       print("----------------------------------------------------------------------")
 
@@ -222,7 +222,7 @@ kyoku = int(input("表示する局を入力してください"))
 tehai, alldict, naki_dict = game_ready(paifu_data, kyoku-1)
 record = game(paifu_data, tehai, alldict, kyoku-1, naki_dict)
 
-record_path = '/Users/itsukikuwahara/Documents/class/it_tue/records/' + paifu_path[61:].replace(".json", "") + "_" + str(kyoku) + ".json"
+record_path = '/Users/itsukikuwahara/Documents/class/it_tue/records/' + paifu_path[-23:].replace(".json", "") + "_" + str(kyoku) + ".json" #jsonファイルを保存するフォルダを指定
 
 with open(record_path, 'w') as w:
   json.dump(record, w)
